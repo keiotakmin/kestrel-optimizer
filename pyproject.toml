@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eagle"
+version = "0.1.0"
+description = "EAGLE optimizer research (bachelor thesis, small-scale datasets)"
+requires-python = ">=3.10"
+dependencies = [
+    "torch",
+    "torchvision",
+    "numpy",
+    "scikit-learn",
+    "matplotlib",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+# ICTAI 2026 ベースライン (adabelief / adahessian)。
+# pip install adabelief-pytorch pytorch_optimizer
+baselines = ["adabelief-pytorch", "pytorch_optimizer"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

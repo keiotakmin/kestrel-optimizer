@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+results/
+data/
+.DS_Store
+ictai/paper/
