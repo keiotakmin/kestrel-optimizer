@@ -64,12 +64,20 @@ evaluations, warm-started CUDA-synchronized timing):
 bash experiments/run_ictai_baselines.sh
 # grid-edge extensions + published-EAGLE baseline + KESTREL+cos
 bash experiments/run_ictai_resume.sh
+# K / beta_h sensitivity sweep (paper Table III)
+bash experiments/run_ictai_sens.sh
+# Rprop baseline across all domains
+bash experiments/run_ictai_rprop.sh
+# diagnostics: per-step cost microbenchmark + INR instrumentation
+python experiments/bench_stepcost.py
+python experiments/diagnose_kestrel_inr.py
+python experiments/diagnose_secant.py
 
 # analysis
 python experiments/analyze_protocol.py --dataset california concrete energy \
-    --prefix protoe protoeh protoe2 protoe3
-python experiments/analyze_inr.py --prefix inrv3 inrv3c
-python ictai/gen_macros.py     # paper numbers (single-source)
+    --prefix protoe protoeh protoe2 protoe3 protoe4 protoe5
+python experiments/analyze_inr.py --prefix inrv3 inrv3c inrv3r
+python ictai/gen_macros.py     # paper numbers (single-source, incl. bolding)
 python ictai/paper_figs.py     # paper figures
 ```
 

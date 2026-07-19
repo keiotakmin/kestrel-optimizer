@@ -35,6 +35,7 @@ FAM_TOK = {
     "adam": "Adam", "adamw": "Adamw", "adam-cos": "Adamcos",
     "adabelief": "Adabelief", "adahessian": "Adahessian",
     "bb": "Bb", "bb-stab": "Bbstab", "lbfgs": "Lbfgs",
+    "rprop": "Rprop",
     "eagle3": "Eaglethree", "eagle-dqn-cd": "Eagle",
     # 旧 EAGLE (arXiv:2502.01036) の正確な構成 = CLI "eagle"
     # (適応閾値切替 + lr 付き割線)。run_ictai_ext2.sh で protoe に追加
@@ -136,14 +137,14 @@ def envelope_stats(dataset, prefixes, key="train_eval_loss", fracs=(0.8, 0.95),
 
 def emit_regression():
     fams = ["adam", "adamw", "adam-cos", "adabelief", "adahessian",
-            "bb", "bb-stab", "lbfgs", "eagle", "eagle3", "eagle-dqn-cd",
-            "kestrel-cos"]
+            "bb", "bb-stab", "lbfgs", "rprop", "eagle", "eagle3",
+            "eagle-dqn-cd", "kestrel-cos"]
     agg = {}  # (fam, frac, basis) -> [per-ds mean]
     for ds, tok in DS_TOK.items():
         # protoe2 = 旧 EAGLE / protoe3 = kestrel-cos (別プレフィックスで
         # 追加走行し、ここでマージ — protoe の上書き破壊を防ぐ)
         stats, seeds = envelope_stats(
-            ds, ("protoe", "protoeh", "protoe2", "protoe3"))
+            ds, ("protoe", "protoeh", "protoe2", "protoe3", "protoe5"))
         for fam in fams:
             ft = FAM_TOK[fam]
             d = (stats or {}).get(fam)
@@ -172,6 +173,27 @@ def emit_regression():
             else:
                 emit(f"RegEagle{ftok}{btok}Lo", TBD)
                 emit(f"RegEagle{ftok}{btok}Hi", TBD)
+
+
+def emit_sensitivity():
+    """K / β_h 感度走査 (protoe4、既定 = protoe の eagle-dqn-cd)。"""
+    # 既定行 (Table III) は Table I の R*EagleMid と同値だが、表ごとに
+    # 独立した太字化のため専用名で複製する
+    for tok in DS_TOK.values():
+        emit(f"S{tok}DefaultMid", macros[f"R{tok}EagleMid"])
+    variants = {"eagle-dqn-cd-k5": "Kfive", "eagle-dqn-cd-k80": "Keighty",
+                "eagle-dqn-cd-bh05": "Bhlow", "eagle-dqn-cd-bh095": "Bhhigh"}
+    for ds, tok in DS_TOK.items():
+        stats, seeds = envelope_stats(ds, ("protoe", "protoe4"))
+        for fam, vt in variants.items():
+            d = (stats or {}).get(fam)
+            if d is None:
+                emit(f"S{tok}{vt}Mid", TBD)
+                emit(f"S{tok}{vt}Floor", TBD)
+            else:
+                emit(f"S{tok}{vt}Mid",
+                     fmt_ratio(d[(0.8, "steps")], len(seeds)))
+                emit(f"S{tok}{vt}Floor", fmt_val(d["floor"]))
 
 
 def emit_ablation():
@@ -241,10 +263,10 @@ def inr_env_best(hists, fam):
 
 def emit_inr():
     fams = ["adamw", "adam-cos", "adabelief", "adahessian",
-            "bb", "bb-stab", "lbfgs", "eagle3", "eagle-dqn-cd",
+            "bb", "bb-stab", "lbfgs", "rprop", "eagle3", "eagle-dqn-cd",
             "kestrel-cos"]
     for image, tok in (("camera", "Cam"), ("astronaut", "Ast")):
-        data = collect_inr(("inrv3", "inrv3c"), image)
+        data = collect_inr(("inrv3", "inrv3c", "inrv3r"), image)
         seeds = sorted(data)
         for fam in fams:
             ft = FAM_TOK[fam]
@@ -277,11 +299,11 @@ def emit_inr():
 def emit_kodak():
     from scipy import stats as sps
     fams = ["adamw", "adam-cos", "adabelief", "adahessian",
-            "bb-stab", "eagle3", "eagle-dqn-cd", "kestrel-cos"]
+            "bb-stab", "rprop", "eagle3", "eagle-dqn-cd", "kestrel-cos"]
     images = [f"kodim{i:02d}" for i in range(1, 25)]
     per_img = {}
     for img in images:
-        d = collect_inr(("kodakb", "kodakc"), img)
+        d = collect_inr(("kodakb", "kodakc", "kodakr"), img)
         if 42 in d:
             per_img[img] = d[42]
     n = len(per_img)
@@ -308,13 +330,18 @@ def emit_kodak():
                 reach_t.append(ar / er)
         if deltas:
             m, s = np.mean(deltas), np.std(deltas)
-            emit(f"K{ft}Delta", f"{m:+.2f}$\\pm${s:.2f}")
+            emit(f"K{ft}Delta", f"${m:+.2f}\\pm{s:.2f}$")
+            emit(f"K{ft}DeltaMean", f"${m:+.2f}$")
             emit(f"K{ft}Wins", f"{sum(d > 0 for d in deltas)}/{len(deltas)}")
             # t 検定は n>=2 かつ有限 p のときのみ (部分データでの nan 対策)
             p = sps.ttest_1samp(deltas, 0.0)[1] if len(deltas) >= 2 else None
             if p is not None and np.isfinite(p):
-                mant, ex = f"{p:.1e}".split("e")
-                emit(f"K{ft}PVal", f"{mant}\\times10^{{{int(ex)}}}")
+                if p >= 1e-3:
+                    emit(f"K{ft}PVal", f"{p:.2f}" if p >= 0.01
+                         else f"{p:.3f}")
+                else:
+                    mant, ex = f"{p:.1e}".split("e")
+                    emit(f"K{ft}PVal", f"{mant}\\times10^{{{int(ex)}}}")
             else:
                 emit(f"K{ft}PVal", TBD)
         else:
@@ -338,7 +365,7 @@ def emit_kodak():
         if len(diffs) >= 2:
             p = sps.ttest_1samp(diffs, 0.0)[1]
             emit(f"KKcosVs{otok}Delta",
-                 f"{np.mean(diffs):+.2f}$\\pm${np.std(diffs):.2f}")
+                 f"${np.mean(diffs):+.2f}\\pm{np.std(diffs):.2f}$")
             emit(f"KKcosVs{otok}PVal", f"{p:.2g}" if p >= 1e-3 else
                  "{}\\times10^{{{}}}".format(*[
                      v if i == 0 else int(v)
@@ -366,6 +393,86 @@ def emit_diagnostics():
          f"{d['coupled_contraction_median']['1.0']:.3f}")
 
 
+def emit_stepcost_bench():
+    """N3: adam(foreach)/adam(fused)/KESTREL の per-step マイクロベンチ。"""
+    path = RESULTS / "analysis" / "stepcost_bench.json"
+    names = {"adam_foreach": "Adam", "adam_fused": "AdamFused",
+             "kestrel_fused": "Kestrel"}
+    if path.exists():
+        with open(path) as f:
+            d = json.load(f)
+        for scale, stok in (("regression", "Reg"), ("siren", "Siren")):
+            for k, ktok in names.items():
+                emit(f"Bench{stok}{ktok}", f"{d[scale][k]:.2f}")
+    else:
+        for stok in ("Reg", "Siren"):
+            for ktok in names.values():
+                emit(f"Bench{stok}{ktok}", TBD)
+
+
+def emit_stepcost():
+    """W2: protoe 実測の per-step 時間比 (stock Adam / fused KESTREL)。"""
+    ratios = []
+    for ds in DS_TOK:
+        agg = {}
+        for path in RESULTS.glob(f"protoe_{ds}_lr*_s*/metrics.json"):
+            with open(path) as f:
+                h = json.load(f)["histories"]
+            for name, hh in h.items():
+                t, st = hh.get("time"), hh.get("steps")
+                if t and st and len(t) > 3 and st[-1] > st[1]:
+                    agg.setdefault(name.split("@")[0] if "@" in name else name,
+                                   []).append((t[-1]-t[1])/(st[-1]-st[1]))
+        if "adam" in agg and "eagle-dqn-cd" in agg:
+            ratios.append(np.mean(agg["adam"]) / np.mean(agg["eagle-dqn-cd"]))
+    if ratios:
+        emit("StepRatioLo", f"{min(ratios):.2f}")
+        emit("StepRatioHi", f"{max(ratios):.2f}")
+    else:
+        emit("StepRatioLo", TBD)
+        emit("StepRatioHi", TBD)
+
+
+def emit_diag_inr():
+    """W3/W4: INR 診断 (diagnose_kestrel_inr.py) + 回帰ジャンプ率実測。"""
+    path = RESULTS / "analysis" / "kestrel_inr_diag.json"
+    if path.exists():
+        with open(path) as f:
+            d = json.load(f)
+        bins = np.array(d["bins"])
+        mid = np.sqrt(bins[:-1] * bins[1:])
+        for img, tok in (("camera", "Cam"), ("astronaut", "Ast")):
+            r = d[img]
+            emit(f"DiagJump{tok}", f"{np.mean(r['jump_frac'])*100:.0f}")
+            emit(f"DiagBench{tok}", f"{np.mean(r['bench_frac'])*100:.0f}")
+            h = np.array(r["hist"])
+            c = h.cumsum() / h.sum()
+            p999 = mid[np.searchsorted(c, 0.999)]
+            mant, ex = f"{p999:.0e}".split("e")
+            emit(f"DiagMagPnnn{tok}", f"{mant}\\times10^{{{int(ex)}}}")
+    else:
+        for tok in ("Cam", "Ast"):
+            for n in (f"DiagJump{tok}", f"DiagBench{tok}",
+                      f"DiagMagPnnn{tok}"):
+                emit(n, TBD)
+    # 回帰スイートの累積ジャンプ率 (protoe の eagle_ratio)
+    vals = []
+    for path in RESULTS.glob("protoe_*_s*/metrics.json"):
+        with open(path) as f:
+            h = json.load(f)["histories"]
+        hh = h.get("eagle-dqn-cd")
+        if hh and hh.get("eagle_ratio"):
+            er = [x for x in hh["eagle_ratio"] if x is not None]
+            if er:
+                vals.append(er[-1] * 100)
+    if vals:
+        emit("RegJumpLo", f"{min(vals):.0f}")
+        emit("RegJumpHi", f"{max(vals):.0f}")
+    else:
+        emit("RegJumpLo", TBD)
+        emit("RegJumpHi", TBD)
+
+
 def emit_constants():
     # SIREN 2-256x3-C: 論文で引くパラメータ数 (グレースケール C=1)
     n = (2 * 256 + 256) + 2 * (256 * 256 + 256) + (256 * 1 + 1)
@@ -374,15 +481,67 @@ def emit_constants():
     emit("BetaH", "0.8")
 
 
+def parse_lead(value):
+    """マクロ値の先頭数値 (表示値) を取り出す。--- や TBD は None。"""
+    import re as _re
+    if "TBD" in value or value.strip() == "---":
+        return None
+    m = _re.search(r"[-+]?\d+\.?\d*", value)
+    return float(m.group(0)) if m else None
+
+
+def apply_bold():
+    """各表の列ごとに最高性能セルを \textbf 化する (表示値で比較、
+    同値タイは全て太字)。p 値列と別基準の注釈行は対象外。"""
+    t1 = ["Adam", "Adamw", "Adamcos", "Rprop", "Adabelief", "Adahessian",
+          "Bb", "Bbstab", "Eaglearxiv", "Lbfgs", "Eagle"]
+    t2 = ["Eagleorig", "Eagledqn", "Eagleswitchonly", "Eagle", "Eaglethree",
+          "Eagleaj", "Eaglenoins"]
+    t4 = ["Adamw", "Adamcos", "Rprop", "Adabelief", "Adahessian", "Bbstab",
+          "Lbfgs", "Eagle", "Kestrelcos"]
+    t5 = ["Adamw", "Adamcos", "Rprop", "Adabelief", "Adahessian", "Bbstab",
+          "Eagle", "Kestrelcos"]
+    cols = []
+    for tok in DS_TOK.values():
+        cols += [([f"R{tok}{f}Mid" for f in t1], True),
+                 ([f"R{tok}{f}Final" for f in t1], True),
+                 ([f"R{tok}{f}Floor" for f in t1], False),
+                 ([f"A{tok}{f}Final" for f in t2], True),
+                 ([f"S{tok}{v}Mid" for v in
+                   ("Kfive", "Keighty", "Bhlow", "Bhhigh")]
+                  + [f"S{tok}DefaultMid"], True)]
+    for itok in ("Cam", "Ast"):
+        cols += [([f"I{itok}{f}Mid" for f in t4], True),
+                 ([f"I{itok}{f}Final" for f in t4]
+                  + [f"I{itok}AdamFinal"], True)]
+    cols += [([f"K{f}Delta" for f in t5], True),
+             ([f"K{f}Wins" for f in t5], True),
+             ([f"K{f}ReachMid" for f in t5], True)]
+    for names, higher in cols:
+        vals = {n: parse_lead(macros[n]) for n in names if n in macros}
+        ok = {n: v for n, v in vals.items() if v is not None}
+        if not ok:
+            continue
+        best = max(ok.values()) if higher else min(ok.values())
+        for n, v in ok.items():
+            if abs(v - best) < 1e-9:
+                macros[n] = "\\textbf{" + macros[n] + "}"
+
+
 def main():
     emit_constants()
     emit_diagnostics()
+    emit_stepcost()
+    emit_stepcost_bench()
+    emit_diag_inr()
     emit_regression()
+    emit_sensitivity()
     emit_ablation()
     emit("AblFloorInflMax",
          f"{max(_floor_infl):.1f}" if _floor_infl else TBD)
     emit_inr()
     emit_kodak()
+    apply_bold()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with open(OUT, "w") as f:
         f.write("% AUTO-GENERATED by ictai/gen_macros.py -- DO NOT EDIT.\n"

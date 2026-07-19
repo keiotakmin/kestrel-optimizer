@@ -37,7 +37,8 @@ C = {
     "adahessian": "#eda100", # slot4 yellow
     "lbfgs": "#1baf7a",      # slot5 aqua
     "kestrel": "#eb6834",    # slot6 orange (ours: dqn-cd / +cos)
-    "eagle-arxiv": "#4a3aa7" # slot7 violet
+    "eagle-arxiv": "#4a3aa7", # slot7 violet
+    "rprop": "#9c1f1d",      # slot8 red を濃色化 (KESTREL 橙との分離)
 }
 INK = "#333333"
 
@@ -54,17 +55,17 @@ plt.rcParams.update({
 SEEDS = (42, 43, 44)
 KEY = "train_eval_loss"
 
-# (表示名, 家族名, 色, 線種, 太さ)
+# (表示名, 家族名, 色, 太さ)。ベースラインは全て同格 (通常線)、
+# KESTREL のみ太線で強調する 2 クラス設計。
+# L-BFGS は line search の勾配評価が steps に現れないため grad-evals 基準
 REG_SERIES = [
-    ("Adam (tuned)", "adam", C["adam"], "-", 1.3),
-    ("Adam+cosine", "adam-cos", C["adam-cos"], "-", 1.3),
-    ("BB (stabilized)", "bb-stab", C["bb-stab"], "-", 1.3),
-    ("AdaHessian", "adahessian", C["adahessian"], "-", 1.3),
-    # L-BFGS は line search の勾配評価が steps に現れないため、
-    # プロファイルは grad-evals 基準で描く (予算監査ポリシーと整合)
-    ("L-BFGS [grad-evals]", "lbfgs", C["lbfgs"], "-", 1.3),
-    ("EAGLE (arXiv)", "eagle", C["eagle-arxiv"], "-", 1.3),
-    ("KESTREL (ours)", "eagle-dqn-cd", C["kestrel"], "-", 2.0),
+    ("Adam+cosine", "adam-cos", C["adam-cos"], 1.2),
+    ("Rprop", "rprop", C["rprop"], 1.2),
+    ("BB (stabilized)", "bb-stab", C["bb-stab"], 1.2),
+    ("AdaHessian", "adahessian", C["adahessian"], 1.2),
+    ("L-BFGS [grad-evals]", "lbfgs", C["lbfgs"], 1.2),
+    ("EAGLE (arXiv)", "eagle", C["eagle-arxiv"], 1.2),
+    ("KESTREL (ours)", "eagle-dqn-cd", C["kestrel"], 2.2),
 ]
 
 
@@ -128,16 +129,14 @@ def fig_regression():
     fracs = np.concatenate([np.arange(0.50, 0.96, 0.05), [0.97]])
     fig, axes = plt.subplots(1, 3, figsize=(7.1, 2.1), sharey=True)
     for ax, (ds, title) in zip(axes, dss):
-        data = collect(ds, ("protoe", "protoeh", "protoe2", "protoe3"))
-        for label, fam, color, ls, lw in REG_SERIES:
-            if fam == "adam":
-                continue
+        data = collect(ds, ("protoe", "protoeh", "protoe2", "protoe3", "protoe5"))
+        # 参照線 (tuned Adam = 1×) は退行的な無彩色細線として最背面に
+        ax.axhline(1.0, color="#8a8a8a", lw=0.9, zorder=1)
+        for label, fam, color, lw in REG_SERIES:
             basis = "grad_evals" if fam == "lbfgs" else "steps"
             prof = speedup_profile(data, fam, fracs, basis=basis)
-            ax.plot(fracs, prof, ls, color=color, lw=lw, label=label,
-                    solid_capstyle="round")
-        ax.axhline(1.0, color=C["adam"], lw=1.0, ls="-", alpha=0.9)
-        ax.text(0.505, 1.04, "tuned Adam", color=C["adam"], fontsize=6.5)
+            ax.plot(fracs, prof, color=color, lw=lw,
+                    label=label, solid_capstyle="round")
         ax.set_yscale("log", base=2)
         ax.set_yticks([0.25, 0.5, 1, 2])
         ax.set_yticklabels(["0.25×", "0.5×", "1×", "2×"])
@@ -146,9 +145,9 @@ def fig_regression():
         ax.set_xlabel("progress fraction $f$")
     axes[0].set_ylabel("reach speedup vs. tuned Adam")
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, ncol=6, loc="upper center",
+    fig.legend(handles, labels, ncol=7, loc="upper center",
                bbox_to_anchor=(0.5, 1.14), frameon=False,
-               columnspacing=1.0, handlelength=1.6)
+               columnspacing=0.8, handlelength=1.4)
     fig.tight_layout()
     fig.savefig(FIGS / "fig_regression.pdf", bbox_inches="tight")
     plt.close(fig)
@@ -167,6 +166,7 @@ def collect_inr(prefixes, image):
 INR_SERIES = [
     ("Adam (tuned)", "adam", C["adam"], "-", 1.3),
     ("Adam+cosine", "adam-cos", C["adam-cos"], "-", 1.3),
+    ("Rprop", "rprop", C["rprop"], "-", 1.3),
     ("KESTREL", "eagle-dqn-cd", C["kestrel"], "-", 2.0),
     ("KESTREL+cos", "kestrel-cos", C["kestrel"], "--", 2.0),
 ]
@@ -211,7 +211,7 @@ def fig_inr():
 
     for ax, image, title in [(axes[0], "camera", "camera"),
                              (axes[1], "astronaut", "astronaut")]:
-        data = collect_inr(("inrv3", "inrv3c"), image)
+        data = collect_inr(("inrv3", "inrv3c", "inrv3r"), image)
         for label, fam, color, ls, lw in INR_SERIES:
             hists = inr_family_best(data, fam)
             if not hists:
@@ -223,15 +223,19 @@ def fig_inr():
         ax.set_xlabel("steps")
         ax.set_ylim(20, 36.5)
     axes[0].set_ylabel("PSNR (dB)")
-    axes[0].legend(loc="lower right", frameon=False)
+    leg = axes[0].legend(loc="lower right", fontsize=6, frameon=True,
+                         borderpad=0.3, labelspacing=0.3, handlelength=1.3,
+                         borderaxespad=0.25)
+    leg.get_frame().set(alpha=0.85, edgecolor="none")
 
     # (c) Kodak-24 散布: x = 30dB 到達 speedup vs adam (log2), y = ΔPSNR
     ax = axes[2]
-    pts = {"eagle-dqn-cd": [], "kestrel-cos": [], "adam-cos": []}
+    pts = {"eagle-dqn-cd": [], "kestrel-cos": [], "adam-cos": [],
+           "rprop": []}
     for i in range(1, 25):
         img = f"kodim{i:02d}"
         h = {}
-        for pre in ("kodakb", "kodakc"):
+        for pre in ("kodakb", "kodakc", "kodakr"):
             p = RESULTS / f"{pre}_{img}_s42" / "metrics.json"
             if p.exists():
                 h.update(json.load(open(p))["histories"])
@@ -244,8 +248,9 @@ def fig_inr():
                                   label="KESTREL"),
              "kestrel-cos": dict(marker="^", color=C["kestrel"],
                                  facecolors="none", label="KESTREL+cos"),
-             "adam-cos": dict(marker="D", color=C["adam-cos"],
-                              label="Adam+cosine")}
+             "adam-cos": dict(marker="o", color=C["adam-cos"],
+                              label="Adam+cosine"),
+             "rprop": dict(marker="o", color=C["rprop"], label="Rprop")}
     for fam, kw in style.items():
         xy = np.array(pts[fam])
         if len(xy) == 0:
@@ -257,15 +262,60 @@ def fig_inr():
     ax.axvline(1.0, color=INK, lw=0.5, ls=":", alpha=0.6)
     ax.axhline(0.0, color=INK, lw=0.5, ls=":", alpha=0.6)
     ax.set_xscale("log", base=2)
-    ax.set_xticks([0.5, 1, 2, 4])
-    ax.set_xticklabels(["0.5×", "1×", "2×", "4×"])
+    ax.set_xticks([0.5, 1, 2, 4, 8])
+    ax.set_xticklabels(["0.5×", "1×", "2×", "4×", "8×"])
     ax.set_title("Kodak-24 (per image)", color=INK)
     ax.set_xlabel("30 dB reach speedup vs. tuned Adam")
     ax.set_ylabel("ΔPSNR (dB)")
-    ax.legend(loc="upper left", frameon=False, handletextpad=0.2)
+    leg = ax.legend(loc="lower right", frameon=True, handletextpad=0.15,
+                    fontsize=5.5, borderpad=0.25, labelspacing=0.25,
+                    markerscale=0.8, borderaxespad=0.2)
+    leg.get_frame().set(alpha=0.85, edgecolor="none")
 
     fig.tight_layout()
     fig.savefig(FIGS / "fig_inr.pdf", bbox_inches="tight")
+    plt.close(fig)
+
+
+def fig_diag():
+    """W3/W4: INR 診断 (kestrel_inr_diag.json) — 稼働率と ジャンプ幅分布。"""
+    path = RESULTS / "analysis" / "kestrel_inr_diag.json"
+    if not path.exists():
+        print("skip fig_diag (no diag json)")
+        return
+    with open(path) as f:
+        d = json.load(f)
+    bins = np.array(d["bins"])
+    mid = np.sqrt(bins[:-1] * bins[1:])
+    fig, axes = plt.subplots(1, 2, figsize=(3.5, 1.7))
+    styles = {"camera": ("-", C["kestrel"]),
+              "astronaut": ("--", C["adam"])}
+    ax = axes[0]
+    for img, (ls, color) in styles.items():
+        r = d[img]
+        ax.plot(r["steps"], 100 * np.array(r["bench_frac"]), ls,
+                color=color, lw=1.2, label=f"{img}: benched")
+        ax.plot(r["steps"], 100 * np.array(r["jump_frac"]), ls,
+                color=color, lw=0.8, alpha=0.55)
+    ax.set_xlabel("steps")
+    ax.set_ylabel("% of coordinates")
+    ax.set_ylim(0, 100)
+    ax.text(1000, 90, "benched", fontsize=6, color=INK)
+    ax.text(1000, 22, "jumping", fontsize=6, color=INK)
+    ax = axes[1]
+    for img, (ls, color) in styles.items():
+        h = np.array(d[img]["hist"], float)
+        ax.plot(mid, h / h.sum(), ls, color=color, lw=1.2, label=img)
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_ylim(1e-8, 1)
+    ax.set_xlabel(r"jump $|\Delta\theta|$")
+    ax.set_ylabel("fraction")
+    ax.axvline(1.0, color=INK, lw=0.5, ls=":", alpha=0.6)
+    ax.legend(frameon=False, fontsize=6, loc="upper right",
+              handletextpad=0.4)
+    fig.tight_layout(pad=0.4)
+    fig.savefig(FIGS / "fig_diag.pdf", bbox_inches="tight")
     plt.close(fig)
 
 
@@ -273,4 +323,5 @@ if __name__ == "__main__":
     FIGS.mkdir(parents=True, exist_ok=True)
     fig_regression()
     fig_inr()
+    fig_diag()
     print(f"figures -> {FIGS}")

@@ -163,6 +163,16 @@ OPTIMIZER_BUILDERS.update({
                                   always_jump=True),
     "eagle-dqn-k50": _orig_variant(trust_kappa=50, curvature_ema=0.8,
                                    always_jump=True),
+    # --- K / β_h 感度走査 (ICTAI Limitations の裏付け、2026-07-17) ---
+    "eagle-dqn-cd-k5": _orig_variant(cooldown_steps=5, curvature_ema=0.8,
+                                     always_jump=True),
+    "eagle-dqn-cd-k80": _orig_variant(cooldown_steps=80, curvature_ema=0.8,
+                                      always_jump=True),
+    "eagle-dqn-cd-bh05": _orig_variant(cooldown_steps=20, curvature_ema=0.5,
+                                       always_jump=True),
+    "eagle-dqn-cd-bh095": _orig_variant(cooldown_steps=20,
+                                        curvature_ema=0.95,
+                                        always_jump=True),
     # --- ICTAI 2026 ベースライン (ICMLA 査読 R5–R8 対応、2026-07-16) ---
     # 各手法ファミリーの代表 1 つ: Adam 系標準 / lr スケジュール対照 /
     # 現代適応 1 次法 / DL 実用対角曲率 / 割線法の直系祖先。
@@ -170,6 +180,10 @@ OPTIMIZER_BUILDERS.update({
     # 密曲率枠)・Lion (lr×wd 同時チューニング前提の汎化狙い)・Adafactor
     # (メモリ節約が 10⁵〜10⁶ params で無意味) は Related Work 言及に留める
     "adamw": lambda params, lr, T=None: optim.AdamW(params, lr=lr),
+    # Rprop (Riedmiller & Braun 1993): フルバッチ決定論設定の古典的
+    # 座標ごと手法 (符号ベース・実質 lr フリー)。lr = 初期ステップ幅で
+    # エンベロープ走査の対象 (ICTAI 査読 W1 対応)
+    "rprop": lambda params, lr, T=None: optim.Rprop(params, lr=lr),
     "adam-cos": lambda params, lr, T=None: AdamCosine(params, lr=lr,
                                                       T=T or 1000),
     "adabelief": lambda params, lr, T=None: _build_adabelief(params, lr),
@@ -204,7 +218,9 @@ PAIR_EVERY = {"eagle3": 5, "eagle3-g1": 5, "eagle3-g2-025": 5,
               "eagle4-aj-bh0": 5, "eagle4-noins": 5, "eagle-dqn": 5,
               "eagle-dqn-bh0": 5, "eagle4-aj-noins": 5, "eagle3-noins": 5,
               "eagle-aj-k200": 5, "eagle-aj-k1000": 5, "eagle-dqn-cd": 5,
-              "eagle-dqn-k50": 5, "kestrel-cos": 5}
+              "eagle-dqn-k50": 5, "kestrel-cos": 5,
+              "eagle-dqn-cd-k5": 5, "eagle-dqn-cd-k80": 5,
+              "eagle-dqn-cd-bh05": 5, "eagle-dqn-cd-bh095": 5}
 
 
 def parse_args():
