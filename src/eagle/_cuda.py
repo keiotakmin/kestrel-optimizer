@@ -8,6 +8,7 @@ PyTorch 本体の fused Adam/SGD と同じ発想で、1 パラメータテンソ
 初回呼び出し時に nvcc でコンパイルされ、~/.cache/torch_extensions にキャッシュされる。
 """
 
+import os
 import warnings
 
 _CPP_SRC = r"""
@@ -315,12 +316,19 @@ def get_extension():
         return _ext
     try:
         from torch.utils.cpp_extension import load_inline
+        cuda_flags = ["-O3"]
+        # ホスト gcc が nvcc の対応表より新しいだけで弾かれる環境向けの
+        # 明示的オプトイン (既定では付けない)。使う場合は必ず
+        # experiments/verify_fused.py で vectorized 経路との数値一致を
+        # 確認してから計測に用いること。
+        if os.environ.get("EAGLE_ALLOW_UNSUPPORTED_COMPILER") == "1":
+            cuda_flags.append("-allow-unsupported-compiler")
         _ext = load_inline(
             name="eagle_cuda_ext",
             cpp_sources=[_CPP_SRC],
             cuda_sources=[_CUDA_SRC],
             functions=["eagle_step_adam", "eagle_step_sgd"],
-            extra_cuda_cflags=["-O3"],
+            extra_cuda_cflags=cuda_flags,
             verbose=False,
         )
     except Exception as e:  # nvcc がない・コンパイル失敗など

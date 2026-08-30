@@ -1,0 +1,22 @@
+{
+  "metadata": {
+    "commit": "530930fdd605020c72cf9eca1cc6b5299c1adaa3",
+    "git_dirty": true,
+    "host": "melon",
+    "python": "3.11.7",
+    "torch": "2.7.0+cu126",
+    "cuda": "12.6",
+    "gpu": "NVIDIA A100 80GB PCIe",
+    "dtype": "float32",
+    "tf32_matmul": false,
+    "tf32_cudnn": true,
+    "cudnn_benchmark": false
+  },
+  "extension_loaded": true,
+  "equivalence": {
+    "max_rel_loss_diff": 0.0,
+    "max_abs_param_diff": 5.960464477539063e-08,
+    "max_rel_param_diff": 1.2208031570410925e-06,
+    "pass": true
+  }
+}

@@ -303,6 +303,7 @@ class EAGLE(Optimizer):
 
         # 間欠ペア + 曲率 EMA: clean ステップのみ測定を EMA に取り込む
         use_ema = group["curvature_ema"] is not None
+        hn = accept = None          # probe 用 (数値には影響しない)
         if use_ema:
             he = state["h_ema"]
             if clean:
@@ -348,6 +349,7 @@ class EAGLE(Optimizer):
 
         # B3: 失敗判定つきクールダウン (EAGLE 許可ステップのみ動作・更新)
         K = group["cooldown_steps"]
+        failed = force_base = None  # probe 用 (数値には影響しない)
         if K is not None and allow_eagle:
             cd = state["cooldown"]
             failed = (state["jumped"].bool() & (prev_g * grad < 0)
@@ -380,6 +382,20 @@ class EAGLE(Optimizer):
         n_base = base_mask.sum()
         state["base_count"] += n_base
         state["eagle_count"] += base_mask.numel() - n_base
+
+        # 診断フック (TO DO 7)。group["_probe"] が設定されたときだけ呼ばれ、
+        # テンソルを読むだけで更新には一切関与しない。prev_grad を上書きする
+        # 前に呼ぶので、probe からは g_{t-1} と g_t の両方が見える。
+        probe = group.get("_probe")
+        if probe is not None:
+            probe(p, state, group, {
+                "prev_grad": prev_g, "grad": grad,
+                "delta_grad": delta_grad, "delta_param": delta_param,
+                "base_mask": base_mask, "base_step": base_step,
+                "eagle_step": eagle_step, "update": update,
+                "h_ema": state.get("h_ema"), "h_new": hn, "h_accept": accept,
+                "failed": failed, "force_base": force_base, "clean": clean,
+            })
 
         prev_p.copy_(p.data)
         prev_g.copy_(grad)

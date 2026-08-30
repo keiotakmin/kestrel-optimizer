@@ -1,0 +1,34 @@
+{
+  "_registered": "2026-08-29",
+  "_purpose": "IEEE Access 拡張版の confirmatory 評価 (継続研究 A)",
+  "_rule": "DIV2K_valid_HR のファイル名昇順で先頭 16 枚。結果を見る前に固定した。以後選び直さない。",
+  "_resize": "768x512 (縦長は 512x768) bicubic。Kodak とプロトコルを一致させるため。",
+  "_license": "DIV2K (NTIRE 2017, Agustsson & Timofte) 学術研究用途。再配布しない。取得元 = https://data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_valid_HR.zip",
+  "_lr_source": "experiments/kodak_lr_lock.json (Kodak tuning で lock)",
+  "images": [
+    "div2k0801",
+    "div2k0802",
+    "div2k0803",
+    "div2k0804",
+    "div2k0805",
+    "div2k0806",
+    "div2k0807",
+    "div2k0808",
+    "div2k0809",
+    "div2k0810",
+    "div2k0811",
+    "div2k0812",
+    "div2k0813",
+    "div2k0814",
+    "div2k0815",
+    "div2k0816"
+  ],
+  "_thresholds_db": [
+    28,
+    30,
+    32,
+    34
+  ],
+  "_thresholds_note": "結果を見る前に固定。1 回の長い run から全閾値を切り出す (閾値ごとに走り直さない)。縮小により高周波が落ちて 30 dB が容易になる可能性があるため、上側の閾値を含めた。",
+  "_primary_report": "到達率・censored reach・最終 PSNR を同一画像集合で併記 (experiments/analyze_reach.py)。主対照は KESTREL+cos 対 Adam+cos。"
+}

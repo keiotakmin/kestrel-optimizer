@@ -75,11 +75,17 @@ DATA_DIR = Path(__file__).resolve().parents[1] / "data"
 
 
 def load_image(name):
-    """skimage 内蔵画像 (camera/astronaut) または Kodak スイート (kodim01
-    〜kodim24、data/kodak/ に配置。768×512 RGB)。"""
+    """skimage 内蔵画像 (camera/astronaut)、Kodak スイート (kodim01〜kodim24、
+    data/kodak/、768×512 RGB)、または DIV2K 16 枚 (div2k0801〜div2k0816、
+    data/div2k16/、768×512 に縮小済み)。"""
     if name.startswith("kodim"):
         from skimage.io import imread
         img = imread(DATA_DIR / "kodak" / f"{name}.png")
+    elif name.startswith("div2k"):
+        # 継続研究 A: DIV2K validation 先頭 16 枚を Kodak と同じ 768x512 に
+        # 揃えたもの (experiments/prepare_div2k.py で生成)
+        from skimage.io import imread
+        img = imread(DATA_DIR / "div2k16" / f"{name}.png")
     else:
         from skimage import data as skdata
         img = getattr(skdata, name)()

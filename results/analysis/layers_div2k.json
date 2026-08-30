@@ -1,0 +1,160 @@
+{
+  "split": "div2k",
+  "seeds": [
+    42,
+    43,
+    44
+  ],
+  "threshold_db": 30.0,
+  "algorithmic": [
+    {
+      "family": "kestrel-cos",
+      "lr": 0.001,
+      "n": 48,
+      "n_reached": 37,
+      "reach_rate": 0.7708333333333334,
+      "median_reach_steps": 560,
+      "km_median_reach_steps": 760.0,
+      "median_reach_grad_evals": 560,
+      "median_final_psnr": 30.79199073930073,
+      "impl": "python"
+    },
+    {
+      "family": "adam-cos",
+      "lr": 0.001,
+      "n": 48,
+      "n_reached": 36,
+      "reach_rate": 0.75,
+      "median_reach_steps": 980.0,
+      "km_median_reach_steps": 1170.0,
+      "median_reach_grad_evals": 980.0,
+      "median_final_psnr": 30.329781717540897,
+      "impl": "foreach"
+    },
+    {
+      "family": "eagle-dqn-cd",
+      "lr": 0.0003,
+      "n": 48,
+      "n_reached": 35,
+      "reach_rate": 0.7291666666666666,
+      "median_reach_steps": 1040,
+      "km_median_reach_steps": 1350.0,
+      "median_reach_grad_evals": 1040,
+      "median_final_psnr": 30.318114303601448,
+      "impl": "python"
+    },
+    {
+      "family": "rprop",
+      "lr": 0.003,
+      "n": 48,
+      "n_reached": 24,
+      "reach_rate": 0.5,
+      "median_reach_steps": 410.0,
+      "km_median_reach_steps": null,
+      "median_reach_grad_evals": 410.0,
+      "median_final_psnr": 29.97162961790268,
+      "impl": "python"
+    },
+    {
+      "family": "eagle3",
+      "lr": 0.001,
+      "n": 48,
+      "n_reached": 24,
+      "reach_rate": 0.5,
+      "median_reach_steps": 860.0,
+      "km_median_reach_steps": null,
+      "median_reach_grad_evals": 860.0,
+      "median_final_psnr": 29.51726242704773,
+      "impl": "python"
+    },
+    {
+      "family": "adam",
+      "lr": 0.001,
+      "n": 48,
+      "n_reached": 16,
+      "reach_rate": 0.3333333333333333,
+      "median_reach_steps": 330.0,
+      "km_median_reach_steps": null,
+      "median_reach_grad_evals": 330.0,
+      "median_final_psnr": 29.364292637371054,
+      "impl": "foreach"
+    },
+    {
+      "family": "adamw",
+      "lr": 0.001,
+      "n": 48,
+      "n_reached": 15,
+      "reach_rate": 0.3125,
+      "median_reach_steps": 280,
+      "km_median_reach_steps": null,
+      "median_reach_grad_evals": 280,
+      "median_final_psnr": 29.319689376423,
+      "impl": "foreach"
+    },
+    {
+      "family": "adabelief",
+      "lr": 0.0003,
+      "n": 48,
+      "n_reached": 12,
+      "reach_rate": 0.25,
+      "median_reach_steps": 680.0,
+      "km_median_reach_steps": null,
+      "median_reach_grad_evals": 680.0,
+      "median_final_psnr": 29.229264362082546,
+      "impl": "python"
+    },
+    {
+      "family": "lbfgs",
+      "lr": 3.0,
+      "n": 48,
+      "n_reached": 12,
+      "reach_rate": 0.25,
+      "median_reach_steps": 570.0,
+      "km_median_reach_steps": null,
+      "median_reach_grad_evals": 1421.5,
+      "median_final_psnr": 28.882973430877414,
+      "impl": "python"
+    },
+    {
+      "family": "adahessian",
+      "lr": 0.3,
+      "n": 48,
+      "n_reached": 6,
+      "reach_rate": 0.125,
+      "median_reach_steps": 860.0,
+      "km_median_reach_steps": null,
+      "median_reach_grad_evals": 1720.0,
+      "median_final_psnr": 27.62951582205864,
+      "impl": "python"
+    },
+    {
+      "family": "bb-stab",
+      "lr": 0.003,
+      "n": 48,
+      "n_reached": 5,
+      "reach_rate": 0.10416666666666667,
+      "median_reach_steps": 1120,
+      "km_median_reach_steps": null,
+      "median_reach_grad_evals": 1120,
+      "median_final_psnr": 24.7660538271154,
+      "impl": "python"
+    }
+  ],
+  "impl_classes": {
+    "adam": "foreach",
+    "adamw": "foreach",
+    "adam-cos": "foreach",
+    "adabelief": "python",
+    "bb-stab": "python",
+    "adahessian": "python",
+    "rprop": "python",
+    "lbfgs": "python",
+    "eagle3": "python",
+    "eagle-dqn-cd": "python",
+    "kestrel-cos": "python"
+  },
+  "hosts": [
+    "modulex"
+  ],
+  "systems_reportable": false
+}

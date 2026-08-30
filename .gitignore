@@ -1,7 +1,11 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-results/
+# Large per-run measurement files stay out; the small analysis outputs that the
+# reported tables are built from are checked in.
+results/*
+!results/analysis/
+!results/coupling/
 data/
 .DS_Store
 ictai/paper/

@@ -186,6 +186,16 @@ OPTIMIZER_BUILDERS.update({
     "rprop": lambda params, lr, T=None: optim.Rprop(params, lr=lr),
     "adam-cos": lambda params, lr, T=None: AdamCosine(params, lr=lr,
                                                       T=T or 1000),
+    # --- 同等実装 (fused 対 fused) の wall-clock 用アーム (継続研究 TO DO 3) ---
+    # KESTREL は fused CUDA カーネルで走るのに対し torch の既定 Adam は
+    # foreach なので、時間比較はカーネル実装の差を含んでしまう。時間軸の
+    # 主張はこの fused アーム同士でのみ行う。数値は非 fused と同一。
+    "adam-fused": lambda params, lr, T=None: optim.Adam(
+        params, lr=lr, fused=True),
+    "adamw-fused": lambda params, lr, T=None: optim.AdamW(
+        params, lr=lr, fused=True),
+    "adam-cos-fused": lambda params, lr, T=None: AdamCosine(
+        params, lr=lr, T=T or 1000, fused=True),
     "adabelief": lambda params, lr, T=None: _build_adabelief(params, lr),
     # 注意: lr スケールが Adam と桁違い (論文既定 0.1)。専用 lr グリッドで
     # 回すこと (run_ictai_baselines.sh / pilot_inr.py --adahessian-lrs)

@@ -1,0 +1,38 @@
+{
+  "_registered": "2026-08-28",
+  "_rule": "kodim{01..24} のうち index%3==1 を tuning、残りを evaluation とする決定論的分割。継続研究 TO DO 2 の実行前に固定した。",
+  "_caveat": "Kodak-24 全体は ICTAI 版までの探索的分析で既に使用済みのため、この分割は selection bias を減らすが exploratory 分析から完全独立ではない。confirmatory 評価には未使用の別 INR データセットが望ましい (研究ノート・論文に明記すること)。",
+  "_selection_metric": {
+    "primary": "tuning 集合上の最終 PSNR の中央値",
+    "secondary": "30 dB への censored reach (到達率を優先し、同率なら median reach steps)",
+    "note": "全 family 共通。family ごとに後出しで変更しない。"
+  },
+  "tuning": [
+    "kodim01",
+    "kodim04",
+    "kodim07",
+    "kodim10",
+    "kodim13",
+    "kodim16",
+    "kodim19",
+    "kodim22"
+  ],
+  "evaluation": [
+    "kodim02",
+    "kodim03",
+    "kodim05",
+    "kodim06",
+    "kodim08",
+    "kodim09",
+    "kodim11",
+    "kodim12",
+    "kodim14",
+    "kodim15",
+    "kodim17",
+    "kodim18",
+    "kodim20",
+    "kodim21",
+    "kodim23",
+    "kodim24"
+  ]
+}

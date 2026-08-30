@@ -1,0 +1,702 @@
+{
+  "_registered": "TO DO 7 stage A",
+  "_prefix": "mechA",
+  "_images": [
+    "camera",
+    "astronaut",
+    "kodim01",
+    "kodim07",
+    "kodim13",
+    "kodim22"
+  ],
+  "_threshold_db": 30.0,
+  "_kestrel_config": "j1_b20_g0_k0",
+  "_selection_metric": {
+    "primary": "全画像上の最終 PSNR の中央値",
+    "secondary": "30 dB への censored reach (到達率優先)"
+  },
+  "locked_lr": {
+    "j0_b0_g0.25_k0": 0.0003,
+    "j0_b0_g0.25_k50": 0.0003,
+    "j0_b0_g0_k0": 0.001,
+    "j0_b0_g0_k50": 0.001,
+    "j0_b20_g0.25_k0": 0.001,
+    "j0_b20_g0.25_k50": 0.0003,
+    "j0_b20_g0_k0": 0.0003,
+    "j0_b20_g0_k50": 0.001,
+    "j1_b0_g0.25_k0": 0.0003,
+    "j1_b0_g0.25_k50": 0.001,
+    "j1_b0_g0_k0": 0.001,
+    "j1_b0_g0_k50": 0.003,
+    "j1_b20_g0.25_k0": 0.0003,
+    "j1_b20_g0.25_k50": 0.001,
+    "j1_b20_g0_k0": 0.0003,
+    "j1_b20_g0_k50": 0.001
+  },
+  "families": {
+    "j0_b0_g0.25_k0": {
+      "grid": [
+        3e-05,
+        0.0001,
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.0003,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": false,
+      "per_lr": {
+        "3e-05": {
+          "n": 6,
+          "median_final_psnr": 29.638049327503396,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 1300
+        },
+        "0.0001": {
+          "n": 6,
+          "median_final_psnr": 29.864163922364256,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 860
+        },
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 32.11965728546207,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 360.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.462751247391665,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 200.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 27.600761115107773,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 1200.0
+        }
+      }
+    },
+    "j0_b0_g0.25_k50": {
+      "grid": [
+        3e-05,
+        0.0001,
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.0003,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": false,
+      "per_lr": {
+        "3e-05": {
+          "n": 6,
+          "median_final_psnr": 29.017959123620194,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 1630.0
+        },
+        "0.0001": {
+          "n": 6,
+          "median_final_psnr": 30.31723930106802,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 940
+        },
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 31.371483132641707,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 500.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.11205935871691,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 270.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 27.860468886655227,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 730.0
+        }
+      }
+    },
+    "j0_b0_g0_k0": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.001,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 30.550810236799485,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 680
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.24276694652065,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 390.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 26.297171609455503,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 820.0
+        }
+      }
+    },
+    "j0_b0_g0_k50": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.001,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 29.148435706176286,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 1180.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 29.828848358171697,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 540
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 26.503528433032514,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 620
+        }
+      }
+    },
+    "j0_b20_g0.25_k0": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.001,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 30.072885418699904,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 320
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.237987125878306,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 200.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 26.95130524980339,
+          "n_reached": 1,
+          "reach_rate": 0.16666666666666666,
+          "median_reach_steps": 1820
+        }
+      }
+    },
+    "j0_b20_g0.25_k50": {
+      "grid": [
+        3e-05,
+        0.0001,
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.0003,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": false,
+      "per_lr": {
+        "3e-05": {
+          "n": 6,
+          "median_final_psnr": 28.901200293121306,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 1630.0
+        },
+        "0.0001": {
+          "n": 6,
+          "median_final_psnr": 30.326256470981363,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 940
+        },
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 31.287027985381393,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 500.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.122489725346206,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 250.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 27.40341266459425,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 1170.0
+        }
+      }
+    },
+    "j0_b20_g0_k0": {
+      "grid": [
+        3e-05,
+        0.0001,
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.0003,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": false,
+      "per_lr": {
+        "3e-05": {
+          "n": 6,
+          "median_final_psnr": 30.17435821598453,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 920
+        },
+        "0.0001": {
+          "n": 6,
+          "median_final_psnr": 29.62005352866653,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 600.0
+        },
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 32.13466117075262,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 340.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 30.947827872653054,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 200.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 26.004423220256356,
+          "n_reached": 1,
+          "reach_rate": 0.16666666666666666,
+          "median_reach_steps": 660
+        }
+      }
+    },
+    "j0_b20_g0_k50": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.001,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 30.472829989311837,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 560.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.119824249090556,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 260.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 27.746203241648104,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 484.0
+        }
+      }
+    },
+    "j1_b0_g0.25_k0": {
+      "grid": [
+        3e-05,
+        0.0001,
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.0003,
+      "status": "locked",
+      "secondary_best_lr": 0.0003,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "3e-05": {
+          "n": 6,
+          "median_final_psnr": 30.027232209548032,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 1140
+        },
+        "0.0001": {
+          "n": 6,
+          "median_final_psnr": 28.980540726121305,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 740
+        },
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 32.34963714874961,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 340.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 30.731324818954562,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 400.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 28.002489739427148,
+          "n_reached": 1,
+          "reach_rate": 0.16666666666666666,
+          "median_reach_steps": 520
+        }
+      }
+    },
+    "j1_b0_g0.25_k50": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.001,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 31.1485042692334,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 580.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.2729965674876,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 240.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 27.704115314976775,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 520.0
+        }
+      }
+    },
+    "j1_b0_g0_k0": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.001,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 30.437855938055396,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 640
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.202098046477087,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 280.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 28.715958179259644,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 220.0
+        }
+      }
+    },
+    "j1_b0_g0_k50": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003,
+        0.009
+      ],
+      "locked_lr": 0.003,
+      "status": "locked",
+      "secondary_best_lr": 0.003,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 27.647932986571668,
+          "n_reached": 0,
+          "reach_rate": 0.0,
+          "median_reach_steps": null
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 29.291082042352162,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 660
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 30.916652558729403,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 250.0
+        },
+        "0.009": {
+          "n": 6,
+          "median_final_psnr": 18.71776314434487,
+          "n_reached": 0,
+          "reach_rate": 0.0,
+          "median_reach_steps": null
+        }
+      }
+    },
+    "j1_b20_g0.25_k0": {
+      "grid": [
+        3e-05,
+        0.0001,
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.0003,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": false,
+      "per_lr": {
+        "3e-05": {
+          "n": 6,
+          "median_final_psnr": 29.768557854265246,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 1160
+        },
+        "0.0001": {
+          "n": 6,
+          "median_final_psnr": 28.854369966402174,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 760
+        },
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 32.20407972945554,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 350.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.463021597773274,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 250.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 27.104954219243904,
+          "n_reached": 0,
+          "reach_rate": 0.0,
+          "median_reach_steps": null
+        }
+      }
+    },
+    "j1_b20_g0.25_k50": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.001,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 31.244801150302273,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 490.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.328046463531457,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 220.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 26.514653535989225,
+          "n_reached": 1,
+          "reach_rate": 0.16666666666666666,
+          "median_reach_steps": 1480
+        }
+      }
+    },
+    "j1_b20_g0_k0": {
+      "grid": [
+        3e-05,
+        0.0001,
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.0003,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": false,
+      "per_lr": {
+        "3e-05": {
+          "n": 6,
+          "median_final_psnr": 30.913441922733714,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 580
+        },
+        "0.0001": {
+          "n": 6,
+          "median_final_psnr": 28.665560175302616,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 400.0
+        },
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 31.699444830099427,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 310.0
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.16828953179388,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 210.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 26.387081753151627,
+          "n_reached": 0,
+          "reach_rate": 0.0,
+          "median_reach_steps": null
+        }
+      }
+    },
+    "j1_b20_g0_k50": {
+      "grid": [
+        0.0003,
+        0.001,
+        0.003
+      ],
+      "locked_lr": 0.001,
+      "status": "locked",
+      "secondary_best_lr": 0.001,
+      "primary_secondary_agree": true,
+      "per_lr": {
+        "0.0003": {
+          "n": 6,
+          "median_final_psnr": 30.171510279904496,
+          "n_reached": 3,
+          "reach_rate": 0.5,
+          "median_reach_steps": 480
+        },
+        "0.001": {
+          "n": 6,
+          "median_final_psnr": 31.790310674971664,
+          "n_reached": 4,
+          "reach_rate": 0.6666666666666666,
+          "median_reach_steps": 230.0
+        },
+        "0.003": {
+          "n": 6,
+          "median_final_psnr": 26.000428336010646,
+          "n_reached": 2,
+          "reach_rate": 0.3333333333333333,
+          "median_reach_steps": 710.0
+        }
+      }
+    }
+  }
+}

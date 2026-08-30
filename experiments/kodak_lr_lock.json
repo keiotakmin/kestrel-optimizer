@@ -1,0 +1,29 @@
+{
+  "_registered": "2026-08-28",
+  "_host": "melon",
+  "_split": "kodak_split.json:tuning",
+  "_images": [
+    "kodim01",
+    "kodim04",
+    "kodim07",
+    "kodim10",
+    "kodim13",
+    "kodim16",
+    "kodim19",
+    "kodim22"
+  ],
+  "_threshold_db": 30.0,
+  "_protocol": {
+    "steps": 2000,
+    "seed": 42,
+    "eval_every": 20,
+    "warmup_steps": 10
+  },
+  "_selection_metric": {
+    "primary": "tuning 集合上の最終 PSNR の中央値",
+    "secondary": "30 dB への censored reach (到達率を優先し、同率なら median reach steps)",
+    "note": "全 family 共通。family ごとに後出しで変更しない。"
+  },
+  "_note": "学習率の選択は tuning 8 枚のみで行い、evaluation 16 枚は ロック後の 1 回の比較まで使用しない。選択指標は PSNR と steps 基準の reach のみで、host 依存の wall-clock は使わない。",
+  "families": {}
+}
