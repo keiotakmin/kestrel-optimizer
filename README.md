@@ -4,9 +4,11 @@ Research code for **KESTREL**, a coordinate-wise secant optimizer with
 post-hoc failure benching for **deterministic full-batch** objectives such as
 implicit neural representation (INR) fitting and full-batch regression.
 
-This repository holds the optimizer, the full measurement pipeline, the
-pre-registration files that fix every selection decision, and the analysis
-code that turns raw runs into the reported tables.
+In this regime curvature is available at no extra gradient cost, and KESTREL
+turns it into a measurable reduction in optimizer steps - within a
+characterised band of target qualities, and with a safeguard whose limits are
+measured rather than assumed. *What this repository establishes* below states
+the findings and points at the code and the stored results behind each one.
 
 ## The method
 
@@ -102,6 +104,98 @@ coordinate state: Adam's `m, v` plus `θ⁻`, `g⁻`, `h` in float32 and `jumped
 launch; a vectorized PyTorch path is used wherever the kernel is unavailable,
 and the two are verified to agree step by step.
 
+## What this repository establishes
+
+Every number below is produced by the pipeline in this repository and is
+stored in `results/analysis/`. The INR results use SIREN fitting; the
+statistical unit is one (image, seed) pair, 48 units per dataset (16 images x
+3 seeds), with learning rates selected on a separate tuning subset and never
+re-chosen on the evaluation data.
+
+### 1. Free curvature buys optimizer steps, and it survives a held-out dataset
+
+On a never-used image set (DIV2K, first 16 validation images), with every
+learning rate locked in advance on Kodak, KESTREL+cos reaches 30 dB with the
+**highest reach rate (37/48) and the highest median final PSNR (30.79 dB)** of
+eleven optimizers. Paired over images, it beats every baseline:
+
+| baseline | paired W/L/T | sign-test p | steps ratio |
+|---|---|---|---|
+| Adam+cos | 28 / 12 / 1 in KESTREL's favour | 0.017 | 1.42x |
+| Rprop | 25 / 12 / 1 | 0.047 | 1.00x |
+| published EAGLE | 36 / 2 / 0 | < 0.001 | 1.85x |
+| Adam, AdamW, AdaBelief, L-BFGS, AdaHessian, BB-stab | 30-37 / 0-6 | < 0.001 | 1.3-6x |
+
+The same ordering holds on the held-out Kodak subset (KESTREL+cos beats
+Adam+cos 29/5, p < 0.001).
+
+Curvature is obtained from gradients the optimizer already computes, so the
+step advantage is also a **gradient-evaluation** advantage. The two curvature
+baselines pay for their information: at 30 dB on DIV2K, L-BFGS needs 1422
+gradient evaluations against 570 optimizer steps, and AdaHessian 1720 against
+860 (`report_layers.py`).
+
+### 2. The advantage is banded, not general
+
+Cutting the same runs at the pre-registered thresholds shows three regimes
+rather than one winner (DIV2K, paired against KESTREL+cos):
+
+| threshold | KESTREL+cos reach | vs Adam+cos | vs Rprop |
+|---|---|---|---|
+| 28 dB | 41/48 | wins, p < 0.001 | **loses**, Rprop 1.99x faster, p < 0.001 |
+| 30 dB | 37/48 (best) | wins, p = 0.017 | wins, p = 0.047 |
+| 32 dB | 10/48 | no difference, p = 1.000 | no difference, p = 0.227 |
+| 34 dB | 2/48 | no difference; Adam+cos reaches more often | Rprop never reaches |
+
+Rprop owns the low-fidelity band, KESTREL+cos the middle, Adam+cos the finish.
+On the held-out Kodak subset Adam+cos also ends at a higher median final PSNR
+(31.73 vs 31.36 dB) despite losing on reach. Reporting a single threshold
+would hide all of this.
+
+### 3. The safeguard protects the worst case, not the average
+
+A 2^4 factorial over the four mechanisms (always-jump, post-hoc bench,
+pre-gate, trust region) with the same locking rule
+(`run_bench_mechanism.py`, `analyze_mechanism.py`):
+
+* KESTREL is **not** a method that jumps everywhere. The bench holds about
+  **88 % of coordinates on the Adam branch**; roughly 12 % take a secant step
+  at any given time.
+* Removing the bench moves the median final PSNR by +0.5 dB but the **minimum
+  over images from 26.01 dB to 16.09 dB**. The safeguard buys the tail.
+* The trust region is not merely redundant, it is **harmful**: -0.66 dB as a
+  main effect. Pre-gating and always-jump contribute +0.40 and +0.30 dB.
+
+### 4. The failure detector has a measurable blind spot
+
+On coupled quadratics the optimum is known, so every jump can be labelled as
+genuinely harmful or not and the bench's firing condition scored against that
+ground truth (`diag_coupling.py`, 2835 runs):
+
+* precision **0.44-0.64**, recall **0.17-0.30**: the detector misses roughly
+  four out of five genuinely harmful jumps;
+* **52-70 % of harmful jumps preserve the gradient sign**, and that share
+  grows with coupling. The condition "sign flip and growing gradient" cannot
+  see them by construction;
+* secant jumps break down at a coupling strength of **||D^-1 E|| ~ 3-4**,
+  consistently across condition numbers 10, 100 and 1000 - the condition
+  number only sets how much off-diagonal mixing is needed to get there.
+
+The quantity `neg_secant_rate`, which is observable without knowing the
+optimum, tracks the true harmful-jump rate at **Spearman +0.93** (n = 315).
+The diagnostics therefore transfer to real tasks, where no ground truth
+exists.
+
+### 5. The optimizer is chaotic, and that shows up as rare collapses
+
+Perturbing a single weight by one ULP and rerunning the same implementation
+with the same seed changes the parameters by O(10) within five steps; Adam
+shows no amplification over 40 steps. Consistent with this, KESTREL-family
+runs collapse below 20 dB on 1-2 of 48 units per dataset, where Adam, Adam+cos
+and Rprop never do. Trajectories are therefore not bit-reproducible and all
+claims here are made over the 48 pre-registered units, never over a single
+run. `REPRODUCIBILITY.md` gives the measurement and its consequences.
+
 ## Install
 
 ```bash
@@ -134,38 +228,28 @@ bash experiments/run_pipeline.sh all      # or: verify base lock main confirm ..
 | `coupling` | coupled-quadratic diagnostics with ground-truth jump labels |
 | `analyze` | censored-reach tables, two-layer report, mechanism and coupling summaries |
 
-## How claims are protected
+## Evaluation protocol
 
-Four properties of this pipeline are deliberate and are what the reported
-numbers rest on. They are described in full in **[REPRODUCIBILITY.md](REPRODUCIBILITY.md)**.
+The numbers above depend on four rules that the code enforces rather than
+documents. `REPRODUCIBILITY.md` states them in full.
 
 1. **Selection is separated from evaluation.** Learning rates are chosen on a
-   tuning subset by a rule fixed in advance, written to
-   `experiments/kodak_lr_lock.json` together with the per-rate statistics
-   behind each choice, and never re-chosen on the evaluation data. A separate
-   never-used image set (`experiments/div2k_split.json`) provides a
-   confirmatory evaluation with the same locked settings.
-
+   tuning subset by a rule fixed in advance and written, with the per-rate
+   statistics behind each choice, to `experiments/kodak_lr_lock.json`. They
+   are never re-chosen on evaluation data, and the confirmatory image set in
+   `experiments/div2k_split.json` had never been used when it was registered.
 2. **No family is compared at a grid edge.** `audit_grid_saturation.py` finds
-   families whose optimum sits at an endpoint; `expand_grid_kodak.py` extends
-   the grid outward by a factor of three until the optimum is interior.
-
+   families whose optimum sits at an endpoint; `expand_grid_kodak.py` widens
+   the grid by a factor of three until it is interior.
 3. **Reach is censored, never filtered.** Reach rates are always shown,
-   non-reaching images stay in the table as `> budget`, medians are withheld
-   when the reach rate is at or below 50 %, and paired comparisons count an
-   image where only one method reached as a win for that method.
-
-4. **Wall-clock is gated on implementation symmetry.**
-   `report_layers.py` separates the algorithmic layer (steps, gradient
-   evaluations) from the systems layer (time) and refuses to print a time
-   column unless every compared family shares one implementation class
-   (`fused` / `foreach` / `python`) and one measurement host.
-
-**KESTREL trajectories are not bit-reproducible.** A single-ULP perturbation
-of one weight grows to O(10) in parameter space within five steps, where Adam
-shows no amplification at all. Claims are therefore made over the
-pre-registered evaluation units (image x seed), never over a single run.
-See REPRODUCIBILITY.md section 1.
+   non-reaching images stay as `> budget`, medians are withheld below a 50 %
+   reach rate, and a paired comparison scores a one-sided reach as a win for
+   the method that reached - so a method cannot gain by failing more often.
+4. **Wall-clock is gated on implementation symmetry.** `report_layers.py`
+   separates optimizer steps and gradient evaluations from wall-clock, and
+   refuses to print a time column unless every compared family shares one
+   implementation class (`fused` / `foreach` / `python`) and one measurement
+   host.
 
 ## Repository layout
 
