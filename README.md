@@ -1,19 +1,106 @@
 # KESTREL
 
 Research code for **KESTREL**, a coordinate-wise secant optimizer with
-post-hoc failure benching for **deterministic full-batch** objectives
-(implicit neural representation fitting, full-batch regression).
-
-KESTREL maintains a per-coordinate secant estimate of the diagonal curvature
-from consecutive gradients at no extra gradient cost, takes learning-rate-free
-Newton-like steps on the coordinates with a valid estimate, and secures them
-with a single safeguard: a **post-hoc bench** that detects a failed jump from
-the gradient response and demotes only the failing coordinates to Adam for
-`K = 20` steps.
+post-hoc failure benching for **deterministic full-batch** objectives such as
+implicit neural representation (INR) fitting and full-batch regression.
 
 This repository holds the optimizer, the full measurement pipeline, the
 pre-registration files that fix every selection decision, and the analysis
 code that turns raw runs into the reported tables.
+
+## The method
+
+**Setting.** The objective is deterministic: the same parameters always
+produce the same gradient, because the whole batch is used at every step.
+Two consecutive gradients then differ only because the parameters moved, so
+the finite difference along each coordinate is a curvature measurement rather
+than a noise sample. KESTREL is built for exactly this regime and deliberately
+degrades to Adam when it does not hold.
+
+**Design principle.** Do not try to predict which secant steps will succeed.
+Take them all, detect the failures from the gradient response one step later,
+and demote only the failing coordinates.
+
+**Notation.** All operations are element-wise over coordinates `i`. At step
+`t`: `g` is the current gradient, `g⁻` the previous one, `θ⁻` the previous
+parameters. State carried per coordinate: Adam moments `m, v`; the curvature
+estimate `h`; the flag `jumped`; the counter `cooldown`. Constants:
+`β₁, β₂, ε` (Adam), `β_h = 0.8` (curvature EMA), `K = 20` (bench length),
+`lr` (fallback learning rate only).
+
+```
+for each step t:
+    g ← ∇L(θ)                                  # one gradient, full batch
+
+    # --- 1. Adam fallback branch (always maintained) ------------------
+    m ← β₁·m + (1-β₁)·g
+    v ← β₂·v + (1-β₂)·g²
+    v̂ ← v / (1-β₂ᵗ)
+    adam_step ← lr/(1-β₁ᵗ) · m / (√v̂ + ε)
+
+    # --- 2. Curvature measurement (secant, no extra gradient) ---------
+    Δθ ← θ - θ⁻
+    Δg ← g - g⁻
+    where |Δθ| > 1e-12:
+        h_new ← Δg / Δθ                        # diagonal curvature estimate
+        where h_new > 0:                       # positive measurements only
+            h ← β_h·h + (1-β_h)·h_new  if h > 0  else  h_new
+    # a non-positive or undefined measurement is discarded; h keeps its value
+
+    # --- 3. Post-hoc bench: judge LAST step's jumps by this step's g ---
+    failed ← jumped ∧ (g⁻·g < 0) ∧ (|g| > |g⁻|)    # overshoot signature
+    cooldown ← K            where failed
+    benched  ← cooldown > 0
+    cooldown ← cooldown - 1 where benched
+
+    # --- 4. Select the update per coordinate --------------------------
+    jump ← (h > 0) ∧ ¬benched
+    θ ← θ - g / max(h, 1e-12)      where jump         # Newton-like, no lr
+    θ ← θ - adam_step              where ¬jump        # Adam fallback
+
+    # --- 5. Bookkeeping ------------------------------------------------
+    jumped ← jump
+    θ⁻ ← θ (pre-update),  g⁻ ← g
+```
+
+Five properties follow directly from the pseudocode.
+
+1. **The jump carries no learning rate.** `g / h` is a Newton step on the
+   diagonal. `lr` tunes only the Adam fallback, which is why pairing KESTREL
+   with a cosine-annealed fallback changes the finish without touching the
+   jumps.
+2. **Curvature costs nothing extra.** `Δg / Δθ` reuses gradients the optimizer
+   already computed: one gradient evaluation per step, the same as Adam, and
+   no Hessian-vector products or line searches.
+3. **Only positive curvature is admitted.** A Newton step along a direction of
+   negative measured curvature points away from the minimum, so those
+   measurements are discarded and the stale positive value is kept. This is a
+   deliberate blind spot and it is measured, not assumed: see
+   `bench_probe.py`'s `neg_secant_rate`.
+4. **Failure detection is post-hoc, and it is a proxy.** A coordinate is
+   judged only after its jump, by whether the gradient flipped sign *and* grew.
+   That signature catches overshoot; it cannot see a failure that preserves the
+   gradient sign. `diag_coupling.py` scores this detector against ground truth
+   on quadratics where the optimum is known.
+5. **Benching is per coordinate.** A failing coordinate falls back to Adam for
+   `K` steps while every other coordinate keeps jumping. In practice the bench
+   is far from a rare correction: on the six images of the mechanism study it
+   holds about 88 % of coordinates on the Adam branch at any time, and its
+   measured effect falls on the worst case rather than on the average
+   (`analyze_mechanism.py`).
+
+**Variants.** The configuration above is KESTREL; internally it is registered
+as `eagle-dqn-cd`. `kestrel-cos` adds a cosine schedule on the fallback
+learning rate and is the recommended default. The pipeline also builds the
+published EAGLE configuration (arXiv:2502.01036), registered as `eagle`, as a
+baseline, along with the factorial variants that switch the four mechanisms
+(always-jump, bench, pre-gate, trust region) on and off.
+
+**Cost.** Per step: one gradient evaluation and one element-wise pass. Per
+coordinate state: Adam's `m, v` plus `θ⁻`, `g⁻`, `h` in float32 and `jumped`,
+`cooldown` in uint8. A fused CUDA kernel performs the whole update in a single
+launch; a vectorized PyTorch path is used wherever the kernel is unavailable,
+and the two are verified to agree step by step.
 
 ## Install
 
@@ -25,34 +112,6 @@ pip install adabelief-pytorch pytorch_optimizer    # two extra baselines
 Python >= 3.10, PyTorch >= 2.x. On CUDA the fused kernel is JIT-compiled on
 first use; without `nvcc`/`ninja` the code falls back to a vectorized path and
 records that fact in the run metadata.
-
-## Quick start
-
-```python
-from eagle.optim import EAGLE
-
-opt = EAGLE(model.parameters(), lr=1e-3, base="adam",
-            use_lr_in_eagle_update=False, adaptive_threshold=False,
-            threshold=5e-4, curvature_ema=0.8, always_jump=True,
-            cooldown_steps=20)
-
-for step in range(T):
-    opt.clean_step = True        # full batch: every step is a clean measurement
-    opt.zero_grad()
-    loss = criterion(model(x), y)
-    loss.backward()
-    opt.step()
-```
-
-`lr` tunes only the Adam fallback; the secant jump itself carries no learning
-rate. The recommended default pairs KESTREL with a cosine-annealed fallback:
-`eagle.baselines.KestrelCosine`.
-
-The optimizer class is called `EAGLE` because this code base grew out of the
-EAGLE optimizer (arXiv:2502.01036). KESTREL is the configuration registered as
-`eagle-dqn-cd`; `kestrel-cos` is the cosine-fallback variant. The published
-EAGLE configuration is available under the name `eagle` and is included as a
-baseline.
 
 ## Running the experiments
 
@@ -137,6 +196,12 @@ results/coupling/     coupled-quadratic sweep records (checked in)
 Large per-run measurement files are written under `results/` and are
 git-ignored; the small analysis outputs that the tables are built from are
 checked in.
+
+**Naming.** The optimizer class is called `EAGLE` and the package `eagle`
+because this code base grew out of the EAGLE optimizer (arXiv:2502.01036).
+KESTREL is a configuration of that class, not a separate implementation; the
+mapping between the names used in the code and the methods described above is
+given under *Variants*.
 
 ## Diagnostics
 
